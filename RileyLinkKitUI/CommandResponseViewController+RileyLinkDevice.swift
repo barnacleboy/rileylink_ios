@@ -279,12 +279,11 @@ extension CommandResponseViewController {
         }
     }
 
-    static func omniTestBolus(podComms: PodComms, device: RileyLinkDevice) -> T {
+    static func omniTestBolus(podComms: PodComms, device: RileyLinkDevice, units amount: Double) -> T {
         return T { (completionHandler) -> String in
             podComms.runSession(withName: "Test Bolus", using: device, { (session) in
                 let response: String
                 do {
-                    let amount = 1.0
                     try session.bolus(units: amount)
                     response = "Started bolus of \(amount)U"
                 } catch let error {

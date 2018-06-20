@@ -241,8 +241,11 @@ public class OmnipodPairingViewController: UIViewController, IdentifiableClass {
                 guard let podState = self.podComms.podState else {
                     fatalError("insertCannula with no podState")
                 }
-                let entry = BasalScheduleEntry(rate: 0.05, duration: .hours(24))
-                let schedule = BasalSchedule(entries: [entry])
+                let schedule = BasalSchedule(entries:
+                    [BasalScheduleEntry(rate: 0.7, duration: .hours(2)), // 0-2
+                     BasalScheduleEntry(rate: 0.6, duration: .hours(16)), // 2-18
+                     BasalScheduleEntry(rate: 1.0, duration: .hours(4)), // 18-22
+                     BasalScheduleEntry(rate: 0.7, duration: .hours(2))]) // 22-0
                 var calendar = Calendar.current
                 calendar.timeZone = podState.timeZone
                 let now = Date()

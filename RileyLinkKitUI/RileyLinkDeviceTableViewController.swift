@@ -546,7 +546,7 @@ public class RileyLinkDeviceTableViewController: UITableViewController {
                 break
             }
         case .commands:
-            let vc: UIViewController?
+            var vc: UIViewController?
 
             switch availableCommands[indexPath.row] {
             case .tune:
@@ -574,7 +574,68 @@ public class RileyLinkDeviceTableViewController: UITableViewController {
             case .omniTestSetBasal:
                 vc = CommandResponseViewController.omniTestSetTempBasal(podComms: podComms, device: device)
             case .omniTestBolus:
-                vc = CommandResponseViewController.omniTestBolus(podComms: podComms, device: device)
+                let bolusAlertController = UIAlertController(title: "Enter Bolus Units", message: "Enter the units you want to bolus:", preferredStyle: .alert)
+                
+                let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
+                    vc = nil
+                }
+                
+                let confirmAction = UIAlertAction(title: "Bolus", style: .default) { (_) in
+                    let bolusInputString = (bolusAlertController.textFields?[0].text)
+                    if (bolusInputString == nil) {
+                        vc = nil
+                        return
+                    }
+                    
+                    let numberFormatter = NumberFormatter()
+                    var bolusUnits = 0.0
+                    
+                    numberFormatter.decimalSeparator = "."
+                    
+                    if let formatterResult = numberFormatter.number(from: bolusInputString!) {
+                        bolusUnits = formatterResult.doubleValue
+                    }
+                    else {
+                        numberFormatter.decimalSeparator = ","
+                        if let formatterResult = numberFormatter.number(from: bolusInputString!) {
+                            bolusUnits = formatterResult.doubleValue
+                        }
+                    }
+                    
+                    if (bolusUnits <= 0.0 || bolusUnits >= 15.0)
+                    {
+                        let invalidBolusAlertController = UIAlertController(title: "Bolus Input Invalid", message: "The amount of units should range from 0.05 to 15.00.", preferredStyle: .alert)
+                        let defaultAction = UIAlertAction(title: NSLocalizedString("Ok", comment: ""), style: .default, handler: nil)
+                        invalidBolusAlertController.addAction(defaultAction)
+                        self.present(invalidBolusAlertController, animated: true, completion: nil)
+                        
+                        vc = nil
+                        return
+                    }
+                    else
+                    {
+                        bolusUnits = Double(Int(bolusUnits / 0.05)) * 0.05
+                        
+                        let confirmBolusAlertController = UIAlertController(title: "Start Bolusing?", message: "Start bolus of \(bolusUnits)U?", preferredStyle: .alert)
+                        let confirmAction = UIAlertAction(title: "Bolus", style: .default) { (_) in
+                            vc = CommandResponseViewController.omniTestBolus(podComms: self.podComms, device: self.device, units: bolusUnits)
+                        }
+                        
+                        confirmBolusAlertController.addAction(confirmAction)
+                        confirmBolusAlertController.addAction(cancelAction)
+                        self.present(confirmBolusAlertController, animated: true, completion: nil)
+                    }
+                }
+                
+                bolusAlertController.addTextField { (textField) in
+                    textField.placeholder = "Enter Bolus"
+                    textField.keyboardType = UIKeyboardType.decimalPad
+                }
+                
+                bolusAlertController.addAction(confirmAction)
+                bolusAlertController.addAction(cancelAction)
+                
+                self.present(bolusAlertController, animated: true, completion: nil)
             case .omniTestCancelTempBasal:
                 vc = CommandResponseViewController.omniTestCancelTempBasal(podComms: podComms, device: device)
             case .omniTestPlaceholder:
