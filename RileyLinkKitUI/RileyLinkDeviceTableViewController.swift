@@ -546,7 +546,7 @@ public class RileyLinkDeviceTableViewController: UITableViewController {
                 break
             }
         case .commands:
-            var vc: UIViewController?
+            let vc: UIViewController?
 
             switch availableCommands[indexPath.row] {
             case .tune:
@@ -577,13 +577,13 @@ public class RileyLinkDeviceTableViewController: UITableViewController {
                 let bolusAlertController = UIAlertController(title: "Enter Bolus Units", message: "Enter the units you want to bolus:", preferredStyle: .alert)
                 
                 let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
-                    vc = nil
+                    NSLog("Bolus cancelled.")
                 }
                 
                 let confirmAction = UIAlertAction(title: "Bolus", style: .default) { (_) in
                     let bolusInputString = (bolusAlertController.textFields?[0].text)
                     if (bolusInputString == nil) {
-                        vc = nil
+                        NSLog("Bolus input missing.")
                         return
                     }
                     
@@ -608,9 +608,6 @@ public class RileyLinkDeviceTableViewController: UITableViewController {
                         let defaultAction = UIAlertAction(title: NSLocalizedString("Ok", comment: ""), style: .default, handler: nil)
                         invalidBolusAlertController.addAction(defaultAction)
                         self.present(invalidBolusAlertController, animated: true, completion: nil)
-                        
-                        vc = nil
-                        return
                     }
                     else
                     {
@@ -618,7 +615,11 @@ public class RileyLinkDeviceTableViewController: UITableViewController {
                         
                         let confirmBolusAlertController = UIAlertController(title: "Start Bolusing?", message: "Start bolus of \(bolusUnits)U?", preferredStyle: .alert)
                         let confirmAction = UIAlertAction(title: "Bolus", style: .default) { (_) in
-                            vc = CommandResponseViewController.omniTestBolus(podComms: self.podComms, device: self.device, units: bolusUnits)
+                            let vc = CommandResponseViewController.omniTestBolus(podComms: self.podComms, device: self.device, units: bolusUnits)
+                            if let cell = tableView.cellForRow(at: indexPath) {
+                                vc.title = cell.textLabel?.text
+                            }
+                            self.show(vc, sender: indexPath)
                         }
                         
                         confirmBolusAlertController.addAction(confirmAction)
@@ -631,11 +632,12 @@ public class RileyLinkDeviceTableViewController: UITableViewController {
                     textField.placeholder = "Enter Bolus"
                     textField.keyboardType = UIKeyboardType.decimalPad
                 }
-                
                 bolusAlertController.addAction(confirmAction)
                 bolusAlertController.addAction(cancelAction)
                 
                 self.present(bolusAlertController, animated: true, completion: nil)
+                vc = nil
+                
             case .omniTestCancelTempBasal:
                 vc = CommandResponseViewController.omniTestCancelTempBasal(podComms: podComms, device: device)
             case .omniTestPlaceholder:
